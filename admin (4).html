@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAISON — Admin Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Jost:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0d0d; --surface: #161616; --card: #1e1e1e;
+            --accent: #c8a96e; --accent2: #e8d5b0;
+            --text: #f0ece4; --muted: #7a7570;
+            --border: #2a2a2a; --red: #c0392b; --green: #2e7d52;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Jost',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+        /* LAYOUT */
+        .admin-layout { display:grid; grid-template-columns:240px 1fr; min-height:100vh; }
+
+        /* SIDEBAR */
+        .sidebar { background:var(--surface); border-right:1px solid var(--border); padding:0; position:sticky; top:0; height:100vh; overflow-y:auto; }
+        .sidebar-brand { padding:24px 20px 20px; border-bottom:1px solid var(--border); }
+        .sidebar-brand h1 { font-family:'Bodoni Moda',serif; font-size:1.3rem; letter-spacing:6px; color:var(--accent); font-weight:400; }
+        .sidebar-brand p { font-size:.58rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+        .sidebar-nav { padding:16px 0; }
+        .nav-item {
+            display:flex; align-items:center; gap:12px; padding:11px 20px;
+            color:var(--muted); cursor:pointer; transition:all .2s;
+            font-size:.75rem; letter-spacing:1.5px; text-transform:uppercase; font-weight:500;
+            border-left:2px solid transparent;
+        }
+        .nav-item:hover { color:var(--text); background:rgba(255,255,255,0.03); }
+        .nav-item.active { color:var(--accent); border-left-color:var(--accent); background:rgba(200,169,110,0.06); }
+        .nav-item svg { flex-shrink:0; opacity:.7; }
+        .nav-item.active svg { opacity:1; }
+        .sidebar-footer { padding:16px 20px; border-top:1px solid var(--border); margin-top:auto; }
+        .live-indicator { display:flex; align-items:center; gap:8px; font-size:.7rem; color:var(--green); }
+        .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:blink 2s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+        /* MAIN */
+        .main { overflow-y:auto; }
+        .topbar {
+            position:sticky; top:0; z-index:100;
+            background:rgba(13,13,13,0.95); backdrop-filter:blur(10px);
+            border-bottom:1px solid var(--border);
+            padding:0 32px; height:62px;
+            display:flex; align-items:center; justify-content:space-between;
+        }
+        .topbar-title { font-family:'Bodoni Moda',serif; font-size:1.1rem; font-weight:400; letter-spacing:2px; }
+        .topbar-actions { display:flex; gap:10px; align-items:center; }
+        .tb-btn {
+            padding:8px 18px; font-size:.65rem; font-weight:600;
+            letter-spacing:2px; text-transform:uppercase; cursor:pointer;
+            font-family:'Jost',sans-serif; border:1px solid var(--border);
+            background:transparent; color:var(--muted); transition:all .2s;
+        }
+        .tb-btn:hover { border-color:var(--accent); color:var(--accent); }
+        .tb-btn.primary { background:var(--accent); color:#0d0d0d; border-color:var(--accent); }
+        .tb-btn.primary:hover { background:var(--accent2); }
+
+        .content { padding:32px; }
+
+        /* TABS */
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+
+        /* STATS */
+        .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+        .stat-card { background:var(--card); border:1px solid var(--border); padding:20px; }
+        .stat-label { font-size:.6rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+        .stat-val { font-family:'Bodoni Moda',serif; font-size:2rem; font-weight:400; color:var(--accent); }
+        .stat-sub { font-size:.7rem; color:var(--muted); margin-top:4px; font-weight:300; }
+
+        /* PRODUCT TABLE */
+        .section-title { font-family:'Bodoni Moda',serif; font-size:1.1rem; font-weight:400; letter-spacing:2px; margin-bottom:16px; color:var(--accent2); }
+        .table-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap; }
+        .search-input {
+            padding:9px 14px; background:var(--card); border:1px solid var(--border);
+            color:var(--text); font-family:'Jost',sans-serif; font-size:.8rem;
+            outline:none; width:260px; transition:border-color .2s; font-weight:300;
+        }
+        .search-input:focus { border-color:var(--accent); }
+        .cat-select {
+            padding:9px 14px; background:var(--card); border:1px solid var(--border);
+            color:var(--text); font-family:'Jost',sans-serif; font-size:.78rem;
+            outline:none; cursor:pointer;
+        }
+        .table-wrap { overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; }
+        thead th {
+            text-align:left; padding:10px 14px;
+            font-size:.6rem; letter-spacing:3px; text-transform:uppercase;
+            color:var(--muted); border-bottom:1px solid var(--border); font-weight:500;
+        }
+        tbody tr { border-bottom:1px solid rgba(255,255,255,0.04); transition:background .15s; }
+        tbody tr:hover { background:rgba(255,255,255,0.02); }
+        tbody td { padding:12px 14px; font-size:.82rem; font-weight:300; vertical-align:middle; }
+        .emoji-cell { font-size:1.6rem; }
+        .badge-pill {
+            display:inline-block; padding:3px 10px;
+            font-size:.58rem; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+        }
+        .badge-pill.new { background:rgba(200,169,110,0.15); color:var(--accent); }
+        .badge-pill.sale { background:rgba(192,57,43,0.15); color:#e74c3c; }
+        .badge-pill.excl { background:rgba(46,125,82,0.15); color:#4caf74; }
+        .badge-pill.none { background:transparent; color:var(--muted); }
+        .status-toggle {
+            display:inline-flex; align-items:center; gap:8px;
+            cursor:pointer; font-size:.75rem; color:var(--muted); font-weight:300;
+        }
+        .toggle-track {
+            width:34px; height:18px; border-radius:9px;
+            background:var(--border); position:relative; transition:background .2s;
+        }
+        .toggle-thumb {
+            position:absolute; top:2px; left:2px;
+            width:14px; height:14px; border-radius:50%;
+            background:var(--muted); transition:all .2s;
+        }
+        .status-toggle.on .toggle-track { background:rgba(200,169,110,0.3); }
+        .status-toggle.on .toggle-thumb { left:18px; background:var(--accent); }
+        .action-btns { display:flex; gap:6px; }
+        .act-btn {
+            padding:5px 12px; font-size:.62rem; font-weight:600;
+            letter-spacing:1.5px; text-transform:uppercase; cursor:pointer;
+            border:1px solid var(--border); background:transparent;
+            color:var(--muted); font-family:'Jost',sans-serif; transition:all .2s;
+        }
+        .act-btn.edit:hover { border-color:var(--accent); color:var(--accent); }
+        .act-btn.del:hover { border-color:#e74c3c; color:#e74c3c; }
+
+        /* FORM / MODAL */
+        .overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,0.85);
+            z-index:9999; display:flex; align-items:center; justify-content:center;
+            padding:20px; opacity:0; visibility:hidden; transition:all .25s;
+            backdrop-filter:blur(4px);
+        }
+        .overlay.open { opacity:1; visibility:visible; }
+        .form-modal {
+            background:var(--surface); border:1px solid var(--border);
+            max-width:580px; width:100%; max-height:92vh; overflow-y:auto;
+            transform:translateY(20px); transition:transform .25s;
+        }
+        .overlay.open .form-modal { transform:translateY(0); }
+        .fm-header {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:20px 24px; border-bottom:1px solid var(--border);
+        }
+        .fm-header h2 { font-family:'Bodoni Moda',serif; font-size:1.2rem; font-weight:400; letter-spacing:2px; }
+        .fm-close { background:none; border:none; color:var(--text); font-size:1.3rem; cursor:pointer; }
+        .fm-body { padding:24px; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .fg { margin-bottom:14px; }
+        .fg label { display:block; font-size:.6rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; font-weight:500; }
+        .fg input, .fg textarea, .fg select {
+            width:100%; padding:10px 13px;
+            background:var(--card); border:1px solid var(--border);
+            color:var(--text); font-family:'Jost',sans-serif;
+            font-size:.82rem; outline:none; transition:border-color .2s; font-weight:300;
+        }
+        .fg input:focus, .fg textarea:focus, .fg select:focus { border-color:var(--accent); }
+        .fg select option { background:var(--surface); }
+        .fg textarea { resize:vertical; min-height:75px; }
+        .fm-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; }
+
+        /* ADDON EDITOR */
+        .addons-editor { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+        .addon-row { display:flex; gap:8px; align-items:center; }
+        .addon-row input { flex:1; padding:8px 12px; background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'Jost',sans-serif; font-size:.78rem; outline:none; font-weight:300; }
+        .addon-row input:focus { border-color:var(--accent); }
+        .rm-addon { background:none; border:1px solid var(--border); color:var(--muted); cursor:pointer; padding:4px 10px; font-size:.8rem; transition:all .2s; }
+        .rm-addon:hover { border-color:#e74c3c; color:#e74c3c; }
+        .add-addon-btn { padding:7px 14px; background:transparent; border:1px dashed var(--border); color:var(--muted); cursor:pointer; font-size:.68rem; letter-spacing:2px; text-transform:uppercase; font-family:'Jost',sans-serif; transition:all .2s; align-self:flex-start; }
+        .add-addon-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+        /* SETTINGS */
+        .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .settings-card { background:var(--card); border:1px solid var(--border); padding:24px; }
+        .settings-card h3 { font-size:.65rem; letter-spacing:4px; text-transform:uppercase; color:var(--accent); margin-bottom:18px; font-weight:600; }
+
+        /* TOASTS */
+        .a-toast {
+            position:fixed; bottom:24px; right:24px;
+            background:var(--card); border:1px solid var(--accent);
+            border-left:3px solid var(--accent);
+            color:var(--text); padding:13px 20px;
+            font-size:.78rem; font-weight:500; letter-spacing:.5px;
+            z-index:99999; transform:translateX(120%); transition:transform .3s;
+            box-shadow:0 8px 30px rgba(0,0,0,.5);
+        }
+        .a-toast.show { transform:translateX(0); }
+
+        @media(max-width:900px) {
+            .admin-layout { grid-template-columns:1fr; }
+            .sidebar { position:relative; height:auto; }
+            .stats-grid { grid-template-columns:repeat(2,1fr); }
+            .settings-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h1>MAISON</h1>
+            <p>Admin Panel</p>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item active" data-tab="dashboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </div>
+            <div class="nav-item" data-tab="inventory">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7l-8-4-8 4m16 0v10l-8 4m-8-4V7m16 3l-8 4m0 0l-8-4"/></svg>
+                Inventory
+            </div>
+            <div class="nav-item" data-tab="settings">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.63 1.44M4.93 19.07a10 10 0 0 1-1.44-1.63M19.07 19.07a10 10 0 0 0 1.44-1.63M4.93 4.93a10 10 0 0 0-1.63 1.44"/></svg>
+                Settings
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="live-indicator"><div class="live-dot"></div>Store Live</div>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+        <div class="topbar">
+            <div class="topbar-title" id="topbarTitle">Dashboard</div>
+            <div class="topbar-actions">
+                <button class="tb-btn" onclick="window.open('index.html','_blank')">View Store</button>
+                <button class="tb-btn primary" id="addItemBtn">+ Add Product</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="tab-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">Total Products</div><div class="stat-val" id="st-total">0</div><div class="stat-sub">In inventory</div></div>
+                    <div class="stat-card"><div class="stat-label">Active Listings</div><div class="stat-val" id="st-active">0</div><div class="stat-sub">Visible to customers</div></div>
+                    <div class="stat-card"><div class="stat-label">Categories</div><div class="stat-val" id="st-cats">0</div><div class="stat-sub">Product categories</div></div>
+                    <div class="stat-card"><div class="stat-label">Avg. Price</div><div class="stat-val" id="st-avg">₹0</div><div class="stat-sub">Across all products</div></div>
+                </div>
+                <h2 class="section-title">Recent Inventory</h2>
+                <div class="table-wrap" id="dashboardTable"></div>
+            </div>
+
+            <!-- Inventory Tab -->
+            <div class="tab-content" id="tab-inventory">
+                <div class="table-toolbar">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search products…">
+                    <div style="display:flex;gap:10px;">
+                        <select class="cat-select" id="catFilter">
+                            <option value="all">All Categories</option>
+                            <option value="dresses">Dresses</option>
+                            <option value="tops">Tops & Shirts</option>
+                            <option value="ethnic">Ethnic</option>
+                            <option value="formals">Formals</option>
+                            <option value="bottoms">Bottoms</option>
+                            <option value="accessories">Accessories</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-wrap" id="inventoryTable"></div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="tab-settings">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3>Store Identity</h3>
+                        <div class="fg"><label>Brand Name</label><input type="text" id="s-name" placeholder="MAISON"></div>
+                        <div class="fg"><label>Tagline</label><input type="text" id="s-tagline" placeholder="Premium Apparel"></div>
+                        <div class="fg"><label>Email</label><input type="email" id="s-email" placeholder="hello@maison.in"></div>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Contact & Location</h3>
+                        <div class="fg"><label>WhatsApp Number</label><input type="text" id="s-wa" placeholder="919876543210"></div>
+                        <div class="fg"><label>Phone Display</label><input type="text" id="s-phone" placeholder="+91 98765 43210"></div>
+                        <div class="fg"><label>Address</label><input type="text" id="s-address" placeholder="24 Commercial Street…"></div>
+                        <div class="fg"><label>Business Hours</label><input type="text" id="s-hours" placeholder="Mon–Sat 10:00 AM – 8:00 PM"></div>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Shipping</h3>
+                        <div class="fg"><label>Shipping Fee (₹)</label><input type="number" id="s-ship" placeholder="120"></div>
+                        <div class="fg"><label>Free Shipping Above (₹)</label><input type="number" id="s-free" placeholder="1999"></div>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Announcements</h3>
+                        <div class="fg"><label>Promo Code 1</label><input type="text" id="s-promo1" placeholder="MAISON15"></div>
+                        <div class="fg"><label>Promo Code 2</label><input type="text" id="s-promo2" placeholder="TRIO20"></div>
+                        <div class="fg"><label>Offer Banner Text</label><input type="text" id="s-banner" placeholder="New Season Arrivals…"></div>
+                    </div>
+                </div>
+                <div style="margin-top:20px; display:flex; gap:10px;">
+                    <button class="tb-btn primary" onclick="saveSettings()">Save Settings</button>
+                    <button class="tb-btn" onclick="loadSettingsForm()">Reset</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Add / Edit Product Modal -->
+<div class="overlay" id="formOverlay">
+    <div class="form-modal">
+        <div class="fm-header">
+            <h2 id="formTitle">Add Product</h2>
+            <button class="fm-close" id="formClose">&times;</button>
+        </div>
+        <div class="fm-body">
+            <input type="hidden" id="f-id">
+            <div class="form-row">
+                <div class="fg"><label>Product Name *</label><input type="text" id="f-name" placeholder="e.g. Ivory Linen Dress"></div>
+                <div class="fg"><label>Emoji Icon</label><input type="text" id="f-emoji" placeholder="👗" maxlength="4"></div>
+            </div>
+            <div class="form-row">
+                <div class="fg">
+                    <label>Category *</label>
+                    <select id="f-cat">
+                        <option value="dresses">Dresses</option>
+                        <option value="tops">Tops & Shirts</option>
+                        <option value="ethnic">Ethnic</option>
+                        <option value="formals">Formals</option>
+                        <option value="bottoms">Bottoms</option>
+                        <option value="accessories">Accessories</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label>Badge</label>
+                    <select id="f-badge">
+                        <option value="">None</option>
+                        <option value="New">New</option>
+                        <option value="Bestseller">Bestseller</option>
+                        <option value="Sale">Sale</option>
+                        <option value="Exclusive">Exclusive</option>
+                        <option value="Premium">Premium</option>
+                        <option value="Festival">Festival</option>
+                    </select>
+                </div>
+            </div>
+            <div class="fg"><label>Price (₹) *</label><input type="number" id="f-price" placeholder="1999"></div>
+            <div class="fg"><label>Description *</label><textarea id="f-desc" rows="3" placeholder="Product description…"></textarea></div>
+            <div class="fg">
+                <label>Add-ons</label>
+                <div class="addons-editor" id="addonsEditor"></div>
+                <button class="add-addon-btn" id="addAddonRow">+ Add Add-on</button>
+            </div>
+            <div class="fg">
+                <label>Status</label>
+                <select id="f-active">
+                    <option value="true">Active (Visible)</option>
+                    <option value="false">Inactive (Hidden)</option>
+                </select>
+            </div>
+        </div>
+        <div class="fm-footer">
+            <button class="tb-btn" id="formClose2">Cancel</button>
+            <button class="tb-btn primary" id="saveProductBtn">Save Product</button>
+        </div>
+    </div>
+</div>
+
+<div class="a-toast" id="aToast"></div>
+
+<script>
+const INVENTORY_KEY = 'maison_inventory';
+const SETTINGS_KEY  = 'maison_settings';
+
+const defaultInventory = [
+    {id:1,  name:'Ivory Linen Maxi Dress',    category:'dresses',     price:2799, badge:'New',       emoji:'👗', desc:'Floor-length linen maxi with relaxed silhouette and subtle ruching at the waist.',   addons:[{name:'Gift Wrapping',price:99},{name:'Matching Belt',price:499}], active:true},
+    {id:2,  name:'Floral Wrap Midi Dress',     category:'dresses',     price:1999, badge:'Bestseller', emoji:'🌸', desc:'Romantic floral print midi in soft cotton voile. Wrap-style silhouette.',           addons:[{name:'Gift Wrapping',price:99}], active:true},
+    {id:3,  name:'Silk Slip Dress',            category:'dresses',     price:3499, badge:'Exclusive',  emoji:'✨', desc:'Bias-cut silk slip dress with adjustable straps. Minimal and luxurious.',           addons:[{name:'Gift Box',price:149}], active:true},
+    {id:4,  name:'Classic White Linen Shirt',  category:'tops',        price:1399, badge:'',           emoji:'👔', desc:'Relaxed-fit pure linen shirt in crisp white. Mandarin collar, pearlised buttons.',  addons:[{name:'Monogram Embroidery',price:199}], active:true},
+    {id:5,  name:'Striped Oversized Shirt',    category:'tops',        price:1199, badge:'Sale',       emoji:'👕', desc:'Wide-stripe poplin shirt in navy and white. Oversized drop-shoulder cut.',           addons:[], active:true},
+    {id:6,  name:'Silk Blend Kurta',           category:'ethnic',      price:2299, badge:'Festival',   emoji:'🥻', desc:'Hand-block print silk-blend kurta with zari border.',                              addons:[{name:'Dupatta',price:699}], active:true},
+    {id:7,  name:'Anarkali Suit Set',          category:'ethnic',      price:4299, badge:'Exclusive',  emoji:'💫', desc:'Full-length georgette anarkali with zari embroidery. Set with churidar & dupatta.',  addons:[{name:'Gift Box',price:149}], active:true},
+    {id:8,  name:'Italian Wool Blazer',        category:'formals',     price:4999, badge:'Premium',    emoji:'🧥', desc:'Single-button slim-fit blazer in Italian wool blend.',                              addons:[{name:'Trouser Pairing',price:2499}], active:true},
+    {id:9,  name:'High-Rise Cigarette Trousers',category:'bottoms',    price:1899, badge:'',           emoji:'👖', desc:'High-waist cigarette cut in stretch crepe.',                                       addons:[], active:true},
+    {id:10, name:'Structured Leather Tote',    category:'accessories', price:2499, badge:'New',        emoji:'👜', desc:'Vegan leather structured tote with gold hardware.',                                addons:[{name:'Initials',price:199}], active:true},
+];
+
+function getInventory() {
+    const s = localStorage.getItem(INVENTORY_KEY);
+    if (!s) { localStorage.setItem(INVENTORY_KEY, JSON.stringify(defaultInventory)); return JSON.parse(JSON.stringify(defaultInventory)); }
+    return JSON.parse(s);
+}
+function saveInventory(data) { localStorage.setItem(INVENTORY_KEY, JSON.stringify(data)); }
+function getSettings() { const s = localStorage.getItem(SETTINGS_KEY); return s ? JSON.parse(s) : {}; }
+function saveSettingsData(data) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(data)); }
+
+// ── TABS ──
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        item.classList.add('active');
+        const tab = item.dataset.tab;
+        document.getElementById(`tab-${tab}`).classList.add('active');
+        document.getElementById('topbarTitle').textContent = {dashboard:'Dashboard',inventory:'Inventory',settings:'Settings'}[tab];
+        if (tab === 'inventory') renderInventoryTable();
+        if (tab === 'dashboard') renderDashboard();
+        if (tab === 'settings') loadSettingsForm();
+    });
+});
+
+// ── DASHBOARD ──
+function renderDashboard() {
+    const all = getInventory();
+    const active = all.filter(i => i.active !== false);
+    const cats = [...new Set(all.map(i => i.category))].length;
+    const avg = all.length ? Math.round(all.reduce((s,i) => s+i.price,0)/all.length) : 0;
+    document.getElementById('st-total').textContent = all.length;
+    document.getElementById('st-active').textContent = active.length;
+    document.getElementById('st-cats').textContent = cats;
+    document.getElementById('st-avg').textContent = '₹'+avg.toLocaleString('en-IN');
+    const recent = all.slice(-5).reverse();
+    document.getElementById('dashboardTable').innerHTML = buildTable(recent, false);
+}
+
+// ── INVENTORY TABLE ──
+function renderInventoryTable(search='', catFilter='all') {
+    let all = getInventory();
+    if (catFilter !== 'all') all = all.filter(i => i.category === catFilter);
+    if (search) all = all.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
+    document.getElementById('inventoryTable').innerHTML = buildTable(all, true);
+}
+
+function buildTable(items, showActions) {
+    if (!items.length) return '<p style="color:var(--muted);font-size:.82rem;padding:20px 0;font-weight:300">No products found.</p>';
+    return `<table>
+        <thead><tr>
+            <th>Item</th><th>Name</th><th>Category</th><th>Price</th><th>Badge</th>
+            ${showActions ? '<th>Status</th><th>Actions</th>' : ''}
+        </tr></thead>
+        <tbody>
+        ${items.map(item => {
+            const bc = {New:'new',Sale:'sale',Exclusive:'excl',Bestseller:'excl',Premium:'excl',Festival:'excl'}[item.badge] || 'none';
+            return `<tr>
+                <td class="emoji-cell">${item.emoji||'—'}</td>
+                <td style="font-weight:400">${item.name}</td>
+                <td style="text-transform:capitalize">${item.category}</td>
+                <td style="font-weight:500">₹${item.price.toLocaleString('en-IN')}</td>
+                <td>${item.badge ? `<span class="badge-pill ${bc}">${item.badge}</span>` : '<span class="badge-pill none">—</span>'}</td>
+                ${showActions ? `
+                <td>
+                    <div class="status-toggle ${item.active!==false?'on':''}" onclick="toggleStatus(${item.id})">
+                        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                        <span>${item.active!==false?'Active':'Hidden'}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="action-btns">
+                        <button class="act-btn edit" onclick="editProduct(${item.id})">Edit</button>
+                        <button class="act-btn del" onclick="deleteProduct(${item.id})">Delete</button>
+                    </div>
+                </td>` : ''}
+            </tr>`;
+        }).join('')}
+        </tbody>
+    </table>`;
+}
+
+window.toggleStatus = function(id) {
+    const all = getInventory();
+    const idx = all.findIndex(i => i.id === id);
+    if (idx === -1) return;
+    all[idx].active = all[idx].active === false ? true : false;
+    saveInventory(all);
+    renderInventoryTable(
+        document.getElementById('searchInput')?.value || '',
+        document.getElementById('catFilter')?.value || 'all'
+    );
+    toast(all[idx].active ? 'Product activated' : 'Product hidden');
+};
+
+window.deleteProduct = function(id) {
+    if (!confirm('Delete this product? This cannot be undone.')) return;
+    const all = getInventory().filter(i => i.id !== id);
+    saveInventory(all);
+    renderInventoryTable();
+    toast('Product deleted');
+};
+
+// ── PRODUCT FORM ──
+let editingId = null;
+let addonsData = [];
+
+function openAddForm() {
+    editingId = null; addonsData = [];
+    document.getElementById('formTitle').textContent = 'Add Product';
+    document.getElementById('f-id').value = '';
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-emoji').value = '👗';
+    document.getElementById('f-cat').value = 'dresses';
+    document.getElementById('f-badge').value = '';
+    document.getElementById('f-price').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-active').value = 'true';
+    renderAddonRows();
+    document.getElementById('formOverlay').classList.add('open');
+}
+
+window.editProduct = function(id) {
+    const all = getInventory();
+    const item = all.find(i => i.id === id);
+    if (!item) return;
+    editingId = id;
+    addonsData = JSON.parse(JSON.stringify(item.addons || []));
+    document.getElementById('formTitle').textContent = 'Edit Product';
+    document.getElementById('f-id').value = id;
+    document.getElementById('f-name').value = item.name;
+    document.getElementById('f-emoji').value = item.emoji || '👗';
+    document.getElementById('f-cat').value = item.category;
+    document.getElementById('f-badge').value = item.badge || '';
+    document.getElementById('f-price').value = item.price;
+    document.getElementById('f-desc').value = item.desc;
+    document.getElementById('f-active').value = item.active === false ? 'false' : 'true';
+    renderAddonRows();
+    document.getElementById('formOverlay').classList.add('open');
+};
+
+function renderAddonRows() {
+    const container = document.getElementById('addonsEditor');
+    container.innerHTML = addonsData.map((a,i) => `
+        <div class="addon-row">
+            <input type="text" placeholder="Add-on name" value="${a.name}" oninput="addonsData[${i}].name=this.value">
+            <input type="number" placeholder="Price" value="${a.price}" style="width:90px" oninput="addonsData[${i}].price=parseInt(this.value)||0">
+            <button class="rm-addon" onclick="removeAddon(${i})">✕</button>
+        </div>`).join('');
+}
+
+window.removeAddon = function(i) { addonsData.splice(i,1); renderAddonRows(); };
+document.getElementById('addAddonRow').addEventListener('click', () => { addonsData.push({name:'',price:0}); renderAddonRows(); });
+
+document.getElementById('saveProductBtn').addEventListener('click', () => {
+    const name = document.getElementById('f-name').value.trim();
+    const price = parseInt(document.getElementById('f-price').value);
+    const desc = document.getElementById('f-desc').value.trim();
+    if (!name || !price || !desc) { toast('Please fill in required fields'); return; }
+    const all = getInventory();
+    const product = {
+        id: editingId || (Math.max(0,...all.map(i=>i.id))+1),
+        name,
+        emoji: document.getElementById('f-emoji').value || '👗',
+        category: document.getElementById('f-cat').value,
+        badge: document.getElementById('f-badge').value,
+        price,
+        desc,
+        addons: addonsData.filter(a => a.name.trim()),
+        active: document.getElementById('f-active').value === 'true',
+    };
+    if (editingId) {
+        const idx = all.findIndex(i => i.id === editingId);
+        all[idx] = product;
+    } else {
+        all.push(product);
+    }
+    saveInventory(all);
+    document.getElementById('formOverlay').classList.remove('open');
+    renderInventoryTable(); renderDashboard();
+    toast(editingId ? 'Product updated ✦' : 'Product added ✦');
+});
+
+function closeForm() { document.getElementById('formOverlay').classList.remove('open'); }
+document.getElementById('formClose').addEventListener('click', closeForm);
+document.getElementById('formClose2').addEventListener('click', closeForm);
+document.getElementById('formOverlay').addEventListener('click', e => { if(e.target.id==='formOverlay') closeForm(); });
+
+document.getElementById('addItemBtn').addEventListener('click', openAddForm);
+
+// ── SEARCH & FILTER ──
+document.addEventListener('input', e => {
+    if (e.target.id === 'searchInput') renderInventoryTable(e.target.value, document.getElementById('catFilter').value);
+});
+document.addEventListener('change', e => {
+    if (e.target.id === 'catFilter') renderInventoryTable(document.getElementById('searchInput').value, e.target.value);
+});
+
+// ── SETTINGS ──
+function loadSettingsForm() {
+    const s = getSettings();
+    document.getElementById('s-name').value    = s.brandName || '';
+    document.getElementById('s-tagline').value = s.tagline || '';
+    document.getElementById('s-email').value   = s.email || '';
+    document.getElementById('s-wa').value      = s.whatsapp || '';
+    document.getElementById('s-phone').value   = s.phone || '';
+    document.getElementById('s-address').value = s.address || '';
+    document.getElementById('s-hours').value   = s.hours || '';
+    document.getElementById('s-ship').value    = s.shipping || '';
+    document.getElementById('s-free').value    = s.freeabove || '';
+    document.getElementById('s-promo1').value  = s.promo1 || '';
+    document.getElementById('s-promo2').value  = s.promo2 || '';
+    document.getElementById('s-banner').value  = s.banner || '';
+}
+
+window.saveSettings = function() {
+    const s = {
+        brandName: document.getElementById('s-name').value.trim(),
+        tagline:   document.getElementById('s-tagline').value.trim(),
+        email:     document.getElementById('s-email').value.trim(),
+        whatsapp:  document.getElementById('s-wa').value.trim(),
+        phone:     document.getElementById('s-phone').value.trim(),
+        address:   document.getElementById('s-address').value.trim(),
+        hours:     document.getElementById('s-hours').value.trim(),
+        shipping:  document.getElementById('s-ship').value,
+        freeabove: document.getElementById('s-free').value,
+        promo1:    document.getElementById('s-promo1').value.trim(),
+        promo2:    document.getElementById('s-promo2').value.trim(),
+        banner:    document.getElementById('s-banner').value.trim(),
+    };
+    saveSettingsData(s);
+    toast('Settings saved — changes live on store ✦');
+};
+
+// ── TOAST ──
+function toast(msg) {
+    const t = document.getElementById('aToast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Init
+renderDashboard();
+</script>
+</body>
+</html>
